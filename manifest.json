@@ -1,20 +1,19 @@
 {
-  "name": "Sistema de Correspondências - Condomínio Algodoeiro",
-  "short_name": "Correspondências",
+  "name": "Sistema Marques Algodoeiro",
+  "short_name": "SMarques",
+  "description": "Sistema de controle de correspondências para condomínios.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f7f9fb",
-  "theme_color": "#0066cc",
-  "orientation": "portrait",
-  "description": "Sistema de controle de correspondências do Condomínio Residencial Algodoeiro.",
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
   "icons": [
     {
-      "src": "./logo_condominio.jpg",
+      "src": "logo_condominio.jpg",
       "sizes": "192x192",
       "type": "image/jpeg"
     },
     {
-      "src": "./logo_condominio.jpg",
+      "src": "logo_condominio.jpg",
       "sizes": "512x512",
       "type": "image/jpeg"
     }
