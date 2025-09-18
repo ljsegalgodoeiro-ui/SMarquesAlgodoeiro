@@ -1,45 +1,43 @@
-const CACHE_NAME = 'correspondencia-cache-v2';
+const CACHE_NAME = "correspondencias-cache-v1";
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json',
-  './logo_condominio-192.png',
-  './logo_condominio-512.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css'
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./logo_condominio.jpg"
 ];
 
-self.addEventListener('install', event => {
+// Instala o Service Worker e faz o cache inicial
+self.addEventListener("install", event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      console.log("Arquivos em cache inicial");
+      return cache.addAll(urlsToCache);
+    })
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
-  );
-});
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+// Ativa o Service Worker e limpa caches antigos
+self.addEventListener("activate", event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            console.log("Cache antigo removido:", cache);
+            return caches.delete(cache);
           }
         })
-      );
+      )
+    )
+  );
+});
+
+// Intercepta as requisições e responde com cache ou rede
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      // Retorna do cache ou busca na internet
+      return response || fetch(event.request);
     })
   );
 });
