@@ -1,0 +1,21 @@
+{
+  "name": "Controle de Correspondências",
+  "short_name": "Correios",
+  "description": "Sistema de controle de correspondências para condomínios.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a73e8",
+  "icons": [
+    {
+      "src": "logo_condominio.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg"
+    },
+    {
+      "src": "logo_condominio.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg"
+    }
+  ]
+}

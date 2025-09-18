@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker registrado com sucesso: ', registration.scope);
+                }, function(err) {
+                    console.log('Falha no registro do ServiceWorker: ', err);
+                });
+            });
+        }
+    </script>
+</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Correspondências</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --primary-hover-color: #1557b0;
+            --success-color: #28a745;
+            --success-hover-color: #218838;
+            --danger-color: #dc3545;
+            --danger-hover-color: #c82333;
+            --warning-color: #ff6d00;
+            --warning-hover-color: #e65100;
+            --light-bg-color: #f8f9fa;
+            --white-bg-color: #ffffff;
+            --text-color: #333;
+            --secondary-text-color: #666;
+            --border-color: #e9ecef;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--light-bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: var(--white-bg-color);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #4285f4, #34a853);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white-bg-color);
+            font-size: 1.5rem;
+        }
+
+        .logo-right {
+            max-height: 40px;
+        }
+
+        .system-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .condominio-name {
+            color: var(--secondary-text-color);
+            font-size: 0.9rem;
+        }
+
+        .navigation {
+            display: flex;
+            gap: 2rem;
+            background: var(--white-bg-color);
+            padding: 0 2rem;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .nav-item {
+            padding: 1rem 0;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--secondary-text-color);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--white-bg-color);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-info h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-info p {
+            color: var(--secondary-text-color);
+            font-size: 0.9rem;
+        }
+
+        .icon-users {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .icon-mail {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .icon-clock {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .icon-alert {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .form-container,
+        .table-container {
+            background: var(--white-bg-color);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-group label {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--white-bg-color);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: var(--white-bg-color);
+        }
+
+        .btn-success:hover {
+            background: var(--success-hover-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--light-bg-color);
+            color: var(--secondary-text-color);
+            border: 1px solid #ddd;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .btn-danger {
+            background: var(--danger-color);
+            color: var(--white-bg-color);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-hover-color);
+            transform: translateY(-2px);
+        }
+
+        .table-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .table-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filters {
+            background: var(--light-bg-color);
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table th {
+            background: var(--light-bg-color);
+            font-weight: 600;
+            color: var(--secondary-text-color);
+        }
+
+        .table tbody tr:hover {
+            background: #f1f3f4;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-pendente {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-entregue {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .action-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 1.2rem;
+            margin: 0 0.5rem;
+            transition: transform 0.2s ease;
+        }
+
+        .action-link:hover {
+            transform: scale(1.2);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--secondary-text-color);
+            font-style: italic;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: var(--white-bg-color);
+            margin: 10% auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary-text-color);
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success-color);
+            color: var(--white-bg-color);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: var(--danger-color);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .stats-grid,
+            .form-grid,
+            .filters {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .table-container {
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="header">
+        <div class="logo-section">
+            <div class="logo">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <div>
+                <div class="system-title">
+                    Sistema de Correspondências
+                </div>
+                <div class="condominio-name">
+                    Condomínio Residencial Algodoeiro
+                </div>
+            </div>
+        </div>
+        <div>
+            <img src="logo_condominio.jpg" alt="Logo do Condomínio" class="logo-right">
+        </div>
+    </header>
+
+    <nav class="navigation">
+        <a href="#" class="nav-item active" onclick="showSection('dashboard')">
+            <i class="fas fa-chart-bar"></i>
+            Dashboard
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('correspondencias')">
+            <i class="fas fa-envelope"></i>
+            Correspondências
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('entregues')">
+            <i class="fas fa-history"></i>
+            Entregues
+        </a>
+        <a href="#" class="nav-item" onclick="showSection('moradores')">
+            <i class="fas fa-users"></i>
+            Moradores
+        </a>
+    </nav>
+
+    <div class="container">
+        <div id="dashboard-section" class="content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon icon-users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalMoradores">0</h3>
+                        <p>Total Moradores</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-mail">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalCorrespondencias">0</h3>
+                        <p>Total Correspondências</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-clock">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="pendentes">0</h3>
+                        <p>Pendentes</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon icon-alert">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="entregues">0</h3>
+                        <p>Entregues</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="correspondencias-section" class="content hidden">
+            <div class="form-container">
+                <h2 class="section-title">
+                    <i class="fas fa-envelope-open-text"></i>
+                    Registrar Nova Correspondência
+                </h2>
+                <form id="formCorrespondencia">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="tipo">Tipo de Correspondência *</label>
+                            <select id="tipo" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="carta_registrada">Carta Registrada</option>
+                                <option value="pacote">Pacote</option>
+                                <option value="caixa">Caixa</option>
+                                <option value="outros">Outros</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bloco">Bloco *</label>
+                            <select id="bloco" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="apartamento">Apartamento *</label>
+                            <select id="apartamento" required disabled>
+                                <option value="">Selecione o bloco primeiro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="destinatarioId">Destinatário *</label>
+                            <select id="destinatarioId" required disabled>
+                                <option value="">Selecione o apartamento primeiro</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="dataRecebimento">Data de Recebimento *</label>
+                            <input type="date" id="dataRecebimento" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="horaRecebimento">Hora de Recebimento *</label>
+                            <input type="time" id="horaRecebimento" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="observacoes">Observações</label>
+                            <textarea id="observacoes" placeholder="Informações adicionais sobre a correspondência"></textarea>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="limparFormulario('formCorrespondencia')">
+                            <i class="fas fa-broom"></i> Limpar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Registrar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-list"></i> Correspondências Pendentes (<span id="contadorCorrespondencias">0</span>)
+                    </div>
+                    <div>
+                        <button class="btn btn-success" onclick="exportarCorrespondenciasCSV()">
+                            <i class="fas fa-file-excel"></i> Exportar Tudo
+                        </button>
+                    </div>
+                </div>
+                <div class="filters">
+                    <div class="form-group">
+                        <label>Buscar Morador</label>
+                        <input type="text" id="filtroMorador" placeholder="Nome do morador..." onkeyup="filtrarCorrespondenciasPendentes()">
+                    </div>
+                    <div class="form-group">
+                        <label>Bloco</label>
+                        <select id="filtroBloco" onchange="filtrarCorrespondenciasPendentes()">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-secondary" onclick="limparFiltrosPendentes()" style="margin-top: 1.5rem;">
+                            <i class="fas fa-eraser"></i> Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>DATA</th>
+                                <th>MORADOR</th>
+                                <th>UNIDADE</th>
+                                <th>TIPO</th>
+                                <th>OBSERVAÇÕES</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaCorrespondencias">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem; color: #666;">Nenhuma correspondência pendente.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div id="entregues-section" class="content hidden">
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-history"></i> Histórico de Entregas (<span id="contadorEntregues">0</span>)
+                    </div>
+                    <div>
+                        <button class="btn btn-success" onclick="exportarCorrespondenciasCSV()">
+                            <i class="fas fa-file-excel"></i> Exportar Tudo
+                        </button>
+                    </div>
+                </div>
+                <div class="filters">
+                    <div class="form-group">
+                        <label>Buscar Morador</label>
+                        <input type="text" id="filtroEntregueMorador" placeholder="Nome do morador..." onkeyup="filtrarCorrespondenciasEntregues()">
+                    </div>
+                    <div class="form-group">
+                        <label>Bloco</label>
+                        <select id="filtroEntregueBloco" onchange="filtrarCorrespondenciasEntregues()">
+                            <option value="">Todos</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <button type="button" class="btn btn-secondary" onclick="limparFiltrosEntregues()" style="margin-top: 1.5rem;">
+                            <i class="fas fa-eraser"></i> Limpar Filtros
+                        </button>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>DATA REG.</th>
+                                <th>MORADOR</th>
+                                <th>UNIDADE</th>
+                                <th>TIPO</th>
+                                <th>DATA ENTREGA</th>
+                                <th>RETIRADA POR</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaEntregues">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 2rem; color: #666;">Nenhuma correspondência entregue.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="moradores-section" class="content hidden">
+            <div class="form-container">
+                <h2 class="section-title">
+                    <i class="fas fa-user-plus"></i>
+                    Cadastrar Novo Morador
+                </h2>
+                <form id="formMorador">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nomeCompleto">Nome Completo *</label>
+                            <input type="text" id="nomeCompleto" placeholder="Digite o nome completo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefone">Telefone (WhatsApp) *</label>
+                            <input type="tel" id="telefone" placeholder="(11) 99999-9999" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="blocoMorador">Bloco *</label>
+                            <select id="blocoMorador" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="apartamentoMorador">Apartamento *</label>
+                            <select id="apartamentoMorador" required disabled>
+                                <option value="">Selecione o bloco primeiro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="limparFormulario('formMorador')">
+                            <i class="fas fa-broom"></i> Limpar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Cadastrar Morador
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="table-container">
+                <div class="table-header">
+                    <div class="table-title">
+                        <i class="fas fa-users"></i> Moradores Cadastrados (<span id="contadorMoradores">0</span>)
+                    </div>
+                    <div>
+                        <input type="text" id="buscaMorador" placeholder="Buscar por nome..." onkeyup="filtrarMoradores()"
+                            style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 6px;">
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>NOME</th>
+                                <th>UNIDADE</th>
+                                <th>TELEFONE</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaMoradores">
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 2rem; color: #666;">Nenhum morador cadastrado ainda.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEditarMorador" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Morador</h3>
+                <button class="close" onclick="fecharModal('modalEditarMorador')">&times;</button>
+            </div>
+            <form id="formEditarMorador">
+                <input type="hidden" id="editMoradorId">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nome Completo</label>
+                        <input type="text" id="editNome" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input type="tel" id="editTelefone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Bloco</label>
+                        <select id="editBloco" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Apartamento</label>
+                        <select id="editApartamento" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="fecharModal('modalEditarMorador')">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Salvar Alterações
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEntrega" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Marcar como Entregue</h3>
+                <button class="close" onclick="fecharModal('modalEntrega')">&times;</button>
+            </div>
+            <form id="formEntrega">
+                <input type="hidden" id="entregaCorrespondenciaId">
+                <div class="form-group">
+                    <label for="entreguePara">Entregue para (Nome completo) *</label>
+                    <input type="text" id="entreguePara" placeholder="Digite o nome de quem retirou a correspondência" required>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="dataEntrega">Data da Entrega</label>
+                        <input type="date" id="dataEntrega" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaEntrega">Hora da Entrega</label>
+                        <input type="time" id="horaEntrega" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="observacoesEntrega">Observações da Entrega</label>
+                    <textarea id="observacoesEntrega" placeholder="Informações adicionais sobre a entrega (opcional)" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="fecharModal('modalEntrega')">
+                        <i class="fas fa-times"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check"></i> Confirmar Entrega
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Sistema de persistência usando localStorage
+        class DatabaseManager {
+            constructor() {
+                this.initializeData();
+            }
+
+            initializeData() {
+                if (!localStorage.getItem('moradores')) {
+                    localStorage.setItem('moradores', JSON.stringify([]));
+                }
+                if (!localStorage.getItem('correspondencias')) {
+                    localStorage.setItem('correspondencias', JSON.stringify([]));
+                }
+            }
+
+            getMoradores() {
+                return JSON.parse(localStorage.getItem('moradores') || '[]');
+            }
+
+            saveMoradores(moradores) {
+                localStorage.setItem('moradores', JSON.stringify(moradores));
+            }
+
+            getCorrespondencias() {
+                return JSON.parse(localStorage.getItem('correspondencias') || '[]');
+            }
+
+            saveCorrespondencias(correspondencias) {
+                localStorage.setItem('correspondencias', JSON.stringify(correspondencias));
+            }
+        }
+
+        const db = new DatabaseManager();
+
+        let moradores = db.getMoradores();
+        let correspondencias = db.getCorrespondencias();
+
+        // Helpers
+        function capitalizeName(name) {
+            return name.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ');
+        }
+        
+        function formatPhoneNumber(phone) {
+            const cleaned = ('' + phone).replace(/\D/g, '');
+            const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
+            if (match) {
+                return `(${match[1]}) ${match[2]}-${match[3]}`;
+            }
+            return phone;
+        }
+
+        // Navegação
+        function showSection(sectionId) {
+            document.querySelectorAll('.content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(`${sectionId}-section`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                navItem.classList.remove('active');
+            });
+            document.querySelector(`.nav-item[onclick="showSection('${sectionId}')"]`).classList.add('active');
+
+            if (sectionId === 'moradores') {
+                renderTabelaMoradores();
+            } else if (sectionId === 'correspondencias') {
+                renderTabelaCorrespondenciasPendentes();
+            } else if (sectionId === 'entregues') {
+                renderTabelaCorrespondenciasEntregues();
+            } else if (sectionId === 'dashboard') {
+                updateDashboard();
+            }
+        }
+
+        // Dashboard
+        function updateDashboard() {
+            moradores = db.getMoradores();
+            correspondencias = db.getCorrespondencias();
+
+            document.getElementById('totalMoradores').textContent = moradores.length;
+            document.getElementById('totalCorrespondencias').textContent = correspondencias.length;
+            document.getElementById('pendentes').textContent = correspondencias.filter(c => c.status === 'Pendente').length;
+            document.getElementById('entregues').textContent = correspondencias.filter(c => c.status === 'Entregue').length;
+        }
+
+        // Moradores
+        const formMorador = document.getElementById('formMorador');
+        const tabelaMoradores = document.getElementById('tabelaMoradores');
+        const contadorMoradores = document.getElementById('contadorMoradores');
+
+        // Lógica de apartamentos para todos os blocos
+        function getApartamentoOptions() {
+            return [101, 102, 103, 104, 105, 106, 107, 108, 201, 202, 203, 204, 205, 206, 207, 208, 301, 302, 303, 304, 305, 306, 307, 308, 401, 402, 403, 404, 405, 406, 407, 408];
+        }
+
+        function populateMoradorSelects() {
+            const blocos = ['01', '02', '03', '04', '05', '06'];
+            const apartamentoMoradorSelect = document.getElementById('apartamentoMorador');
+            const blocoMoradorSelect = document.getElementById('blocoMorador');
+            const editBlocoSelect = document.getElementById('editBloco');
+            const editApartamentoSelect = document.getElementById('editApartamento');
+
+            blocoMoradorSelect.innerHTML = '<option value="">Selecione...</option>';
+            editBlocoSelect.innerHTML = '<option value="">Selecione...</option>';
+            blocos.forEach(bloco => {
+                blocoMoradorSelect.innerHTML += `<option value="${bloco}">Bloco ${bloco}</option>`;
+                editBlocoSelect.innerHTML += `<option value="${bloco}">Bloco ${bloco}</option>`;
+            });
+
+            const apartamentos = getApartamentoOptions().sort((a,b) => a - b);
+            apartamentoMoradorSelect.innerHTML = '<option value="">Selecione...</option>';
+            editApartamentoSelect.innerHTML = '<option value="">Selecione...</option>';
+            apartamentos.forEach(apto => {
+                apartamentoMoradorSelect.innerHTML += `<option value="${apto}">${apto}</option>`;
+                editApartamentoSelect.innerHTML += `<option value="${apto}">${apto}</option>`;
+            });
+
+            blocoMoradorSelect.addEventListener('change', () => {
+                apartamentoMoradorSelect.disabled = !blocoMoradorSelect.value;
+            });
+
+            editBlocoSelect.addEventListener('change', () => {
+                editApartamentoSelect.disabled = !editBlocoSelect.value;
+            });
+        }
+
+        function renderTabelaMoradores(listaMoradores = moradores) {
+            tabelaMoradores.innerHTML = listaMoradores.length > 0 ?
+                listaMoradores.map(m => `
+                <tr>
+                    <td>${m.nome}</td>
+                    <td>Bloco ${m.bloco} - Apto ${m.apartamento}</td>
+                    <td>${formatPhoneNumber(m.telefone)}</td>
+                    <td>
+                        <a href="#" class="action-link" onclick="editarMorador(${m.id})"><i class="fas fa-edit"></i></a>
+                        <a href="#" class="action-link" onclick="excluirMorador(${m.id})"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                `).join('') :
+                `<tr><td colspan="4" class="no-data">Nenhum morador cadastrado ainda.</td></tr>`;
+            contadorMoradores.textContent = listaMoradores.length;
+            updateCorrespondenceSelects();
+        }
+
+        formMorador.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nome = capitalizeName(document.getElementById('nomeCompleto').value);
+            const telefone = document.getElementById('telefone').value;
+            const bloco = document.getElementById('blocoMorador').value;
+            const apartamento = document.getElementById('apartamentoMorador').value;
+            const morador = {
+                id: Date.now(),
+                nome,
+                telefone,
+                bloco,
+                apartamento
+            };
+            moradores.push(morador);
+            db.saveMoradores(moradores);
+            renderTabelaMoradores();
+            showToast('Morador cadastrado com sucesso!', 'success');
+            formMorador.reset();
+        });
+
+        function filtrarMoradores() {
+            const termo = document.getElementById('buscaMorador').value.toLowerCase();
+            const moradoresFiltrados = moradores.filter(m =>
+                m.nome.toLowerCase().includes(termo) ||
+                m.bloco.toLowerCase().includes(termo) ||
+                m.apartamento.toLowerCase().includes(termo)
+            );
+            renderTabelaMoradores(moradoresFiltrados);
+        }
+
+        function editarMorador(id) {
+            const morador = moradores.find(m => m.id === id);
+            if (morador) {
+                document.getElementById('editMoradorId').value = morador.id;
+                document.getElementById('editNome').value = morador.nome;
+                document.getElementById('editTelefone').value = morador.telefone;
+                document.getElementById('editBloco').value = morador.bloco;
+                document.getElementById('editApartamento').value = morador.apartamento;
+                abrirModal('modalEditarMorador');
+            }
+        }
+
+        const formEditarMorador = document.getElementById('formEditarMorador');
+        formEditarMorador.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editMoradorId').value);
+            const nome = capitalizeName(document.getElementById('editNome').value);
+            const telefone = document.getElementById('editTelefone').value;
+            const bloco = document.getElementById('editBloco').value;
+            const apartamento = document.getElementById('editApartamento').value;
+
+            const moradorIndex = moradores.findIndex(m => m.id === id);
+            if (moradorIndex !== -1) {
+                moradores[moradorIndex] = { ...moradores[moradorIndex], nome, telefone, bloco, apartamento };
+                db.saveMoradores(moradores);
+                renderTabelaMoradores();
+                fecharModal('modalEditarMorador');
+                showToast('Morador atualizado com sucesso!', 'success');
+            }
+        });
+
+        function excluirMorador(id) {
+            if (confirm('Tem certeza que deseja excluir este morador?')) {
+                moradores = moradores.filter(m => m.id !== id);
+                db.saveMoradores(moradores);
+                renderTabelaMoradores();
+                showToast('Morador excluído com sucesso!', 'success');
+            }
+        }
+
+        // Correspondências
+        const formCorrespondencia = document.getElementById('formCorrespondencia');
+        const tabelaCorrespondencias = document.getElementById('tabelaCorrespondencias');
+        const tabelaEntregues = document.getElementById('tabelaEntregues');
+        const contadorCorrespondencias = document.getElementById('contadorCorrespondencias');
+        const contadorEntregues = document.getElementById('contadorEntregues');
+
+        function updateCorrespondenceSelects() {
+            const blocos = ['01', '02', '03', '04', '05', '06'];
+            const blocoSelect = document.getElementById('bloco');
+            const apartamentoSelect = document.getElementById('apartamento');
+            const destinatarioSelect = document.getElementById('destinatarioId');
+
+            blocoSelect.innerHTML = '<option value="">Selecione...</option>';
+            blocos.forEach(bloco => {
+                blocoSelect.innerHTML += `<option value="${bloco}">Bloco ${bloco}</option>`;
+            });
+
+            const apartamentosFixos = getApartamentoOptions().sort((a,b) => a - b);
+            apartamentoSelect.innerHTML = '<option value="">Selecione o bloco primeiro</option>';
+            apartamentosFixos.forEach(apto => {
+                apartamentoSelect.innerHTML += `<option value="${apto}">${apto}</option>`;
+            });
+
+            blocoSelect.addEventListener('change', () => {
+                const bloco = blocoSelect.value;
+                apartamentoSelect.disabled = !bloco;
+                apartamentoSelect.value = '';
+                destinatarioSelect.disabled = true;
+                destinatarioSelect.innerHTML = '<option value="">Selecione o apartamento primeiro</option>';
+            });
+
+            apartamentoSelect.addEventListener('change', () => {
+                const bloco = blocoSelect.value;
+                const apartamento = apartamentoSelect.value;
+                destinatarioSelect.innerHTML = '<option value="">Selecione...</option>';
+                if (apartamento) {
+                    const moradoresDoApto = moradores.filter(m => m.bloco === bloco && m.apartamento === apartamento);
+                    moradoresDoApto.forEach(m => {
+                        destinatarioSelect.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+                    });
+                    destinatarioSelect.disabled = false;
+                } else {
+                    destinatarioSelect.disabled = true;
+                }
+            });
+
+            // Popula os filtros de bloco
+            const filtroBloco = document.getElementById('filtroBloco');
+            const filtroEntregueBloco = document.getElementById('filtroEntregueBloco');
+            filtroBloco.innerHTML = '<option value="">Todos</option>';
+            filtroEntregueBloco.innerHTML = '<option value="">Todos</option>';
+            blocos.forEach(bloco => {
+                filtroBloco.innerHTML += `<option value="${bloco}">Bloco ${bloco}</option>`;
+                filtroEntregueBloco.innerHTML += `<option value="${bloco}">Bloco ${bloco}</option>`;
+            });
+        }
+
+        function renderTabelaCorrespondenciasPendentes(lista = correspondencias) {
+            const pendentes = lista.filter(c => c.status === 'Pendente');
+            tabelaCorrespondencias.innerHTML = pendentes.length > 0 ?
+                pendentes.map(c => {
+                    const morador = moradores.find(m => m.id === c.moradorId) || {};
+                    return `
+                        <tr>
+                            <td>${c.dataRecebimento} ${c.horaRecebimento}</td>
+                            <td>${morador.nome || 'N/A'}</td>
+                            <td>Bloco ${morador.bloco || 'N/A'} - Apto ${morador.apartamento || 'N/A'}</td>
+                            <td>${c.tipo}</td>
+                            <td>${c.observacoes || '-'}</td>
+                            <td><span class="status-badge status-pendente">${c.status}</span></td>
+                            <td>
+                                <a href="#" class="action-link" onclick="abrirModalEntrega(${c.id})"><i class="fas fa-box-open"></i></a>
+                                <a href="#" class="action-link" onclick="excluirCorrespondencia(${c.id})"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                    `;
+                }).join('') :
+                `<tr><td colspan="7" class="no-data">Nenhuma correspondência pendente.</td></tr>`;
+            contadorCorrespondencias.textContent = pendentes.length;
+        }
+
+        function renderTabelaCorrespondenciasEntregues(lista = correspondencias) {
+            const entregues = lista.filter(c => c.status === 'Entregue');
+            tabelaEntregues.innerHTML = entregues.length > 0 ?
+                entregues.map(c => {
+                    const morador = moradores.find(m => m.id === c.moradorId) || {};
+                    return `
+                        <tr>
+                            <td>${c.dataRecebimento} ${c.horaRecebimento}</td>
+                            <td>${morador.nome || 'N/A'}</td>
+                            <td>Bloco ${morador.bloco || 'N/A'} - Apto ${morador.apartamento || 'N/A'}</td>
+                            <td>${c.tipo}</td>
+                            <td>${c.dataEntrega} ${c.horaEntrega}</td>
+                            <td>${c.entreguePara}</td>
+                            <td>
+                                <a href="#" class="action-link" onclick="excluirCorrespondencia(${c.id})"><i class="fas fa-trash"></i></a>
+                            </td>
+                        </tr>
+                    `;
+                }).join('') :
+                `<tr><td colspan="7" class="no-data">Nenhuma correspondência entregue.</td></tr>`;
+            contadorEntregues.textContent = entregues.length;
+        }
+
+
+        formCorrespondencia.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const moradorId = parseInt(document.getElementById('destinatarioId').value);
+            const morador = moradores.find(m => m.id === moradorId);
+            
+            const novaCorrespondencia = {
+                id: Date.now(),
+                moradorId,
+                tipo: document.getElementById('tipo').value,
+                observacoes: document.getElementById('observacoes').value,
+                dataRecebimento: document.getElementById('dataRecebimento').value,
+                horaRecebimento: document.getElementById('horaRecebimento').value,
+                status: 'Pendente'
+            };
+
+            correspondencias.unshift(novaCorrespondencia);
+            db.saveCorrespondencias(correspondencias);
+            renderTabelaCorrespondenciasPendentes();
+            updateDashboard();
+
+            // Mostra o toast de sucesso com o botão do WhatsApp
+            const whatsAppLink = createWhatsAppLink(morador, novaCorrespondencia);
+            showToast('Correspondência registrada com sucesso!', 'success', whatsAppLink);
+
+            limparFormulario('formCorrespondencia');
+        });
+
+        // Nova função para criar o link do WhatsApp
+        function createWhatsAppLink(morador, correspondencia) {
+            if (!morador || !morador.telefone) {
+                console.error("Morador ou telefone não encontrados.");
+                return null;
+            }
+
+            const now = new Date();
+            const hour = now.getHours();
+            let saudacao;
+            if (hour >= 5 && hour < 12) {
+                saudacao = 'Bom dia';
+            } else if (hour >= 12 && hour < 18) {
+                saudacao = 'Boa tarde';
+            } else {
+                saudacao = 'Boa noite';
+            }
+
+            const telefoneLimpo = morador.telefone.replace(/\D/g, '');
+            const nomeMorador = morador.nome.split(' ')[0]; // Pega só o primeiro nome
+            const dataRecebimento = new Date(correspondencia.dataRecebimento + 'T00:00:00').toLocaleDateString('pt-BR');
+            const tipoCorrespondencia = document.getElementById('tipo').options[document.getElementById('tipo').selectedIndex].text;
+            
+            const mensagem = `
+            ${saudacao}, Sr(a) ${nomeMorador},
+            Você tem uma nova correspondência na portaria do condomínio:
+            
+            *Descrição:* ${tipoCorrespondencia}
+            *Data e Hora de Recebimento:* ${dataRecebimento} às ${correspondencia.horaRecebimento}
+            
+            Por favor, retirar na portaria.
+            Atenciosamente,
+            Portaria - Condomínio Residencial Algodoeiro
+            `.trim().replace(/ {2,}/g, ' ');
+
+            const encodedMessage = encodeURIComponent(mensagem);
+            return `https://wa.me/55${telefoneLimpo}?text=${encodedMessage}`;
+        }
+
+
+        function filtrarCorrespondenciasPendentes() {
+            const filtroMorador = document.getElementById('filtroMorador').value.toLowerCase();
+            const filtroBloco = document.getElementById('filtroBloco').value;
+
+            const correspondenciasFiltradas = correspondencias.filter(c => {
+                if (c.status !== 'Pendente') return false;
+                const morador = moradores.find(m => m.id === c.moradorId) || {};
+                const nomeMorador = morador.nome ? morador.nome.toLowerCase() : '';
+                const blocoMorador = morador.bloco ? morador.bloco.toLowerCase() : '';
+                const matchesMorador = !filtroMorador || nomeMorador.includes(filtroMorador);
+                const matchesBloco = !filtroBloco || blocoMorador === filtroBloco.toLowerCase();
+                return matchesMorador && matchesBloco;
+            });
+
+            renderTabelaCorrespondenciasPendentes(correspondenciasFiltradas);
+        }
+        
+        function limparFiltrosPendentes() {
+            document.getElementById('filtroMorador').value = '';
+            document.getElementById('filtroBloco').value = '';
+            renderTabelaCorrespondenciasPendentes();
+        }
+
+        function filtrarCorrespondenciasEntregues() {
+            const filtroMorador = document.getElementById('filtroEntregueMorador').value.toLowerCase();
+            const filtroBloco = document.getElementById('filtroEntregueBloco').value;
+
+            const correspondenciasFiltradas = correspondencias.filter(c => {
+                if (c.status !== 'Entregue') return false;
+                const morador = moradores.find(m => m.id === c.moradorId) || {};
+                const nomeMorador = morador.nome ? morador.nome.toLowerCase() : '';
+                const blocoMorador = morador.bloco ? morador.bloco.toLowerCase() : '';
+                const matchesMorador = !filtroMorador || nomeMorador.includes(filtroMorador);
+                const matchesBloco = !filtroBloco || blocoMorador === filtroBloco.toLowerCase();
+                return matchesMorador && matchesBloco;
+            });
+
+            renderTabelaCorrespondenciasEntregues(correspondenciasFiltradas);
+        }
+
+        function limparFiltrosEntregues() {
+            document.getElementById('filtroEntregueMorador').value = '';
+            document.getElementById('filtroEntregueBloco').value = '';
+            renderTabelaCorrespondenciasEntregues();
+        }
+
+        function excluirCorrespondencia(id) {
+            if (confirm('Tem certeza que deseja excluir esta correspondência?')) {
+                correspondencias = correspondencias.filter(c => c.id !== id);
+                db.saveCorrespondencias(correspondencias);
+                renderTabelaCorrespondenciasPendentes();
+                renderTabelaCorrespondenciasEntregues();
+                updateDashboard();
+                showToast('Correspondência excluída com sucesso!', 'success');
+            }
+        }
+
+        // Modals
+        function abrirModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function fecharModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            document.querySelectorAll('.modal').forEach(modal => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        // Entrega
+        function abrirModalEntrega(id) {
+            document.getElementById('entregaCorrespondenciaId').value = id;
+            document.getElementById('entreguePara').value = '';
+            document.getElementById('dataEntrega').valueAsDate = new Date();
+            document.getElementById('horaEntrega').value = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            abrirModal('modalEntrega');
+        }
+
+        const formEntrega = document.getElementById('formEntrega');
+        formEntrega.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('entregaCorrespondenciaId').value);
+            const entreguePara = capitalizeName(document.getElementById('entreguePara').value);
+            const dataEntrega = document.getElementById('dataEntrega').value;
+            const horaEntrega = document.getElementById('horaEntrega').value;
+            const observacoesEntrega = document.getElementById('observacoesEntrega').value;
+
+            const correspondenciaIndex = correspondencias.findIndex(c => c.id === id);
+            if (correspondenciaIndex !== -1) {
+                correspondencias[correspondenciaIndex] = {
+                    ...correspondencias[correspondenciaIndex],
+                    status: 'Entregue',
+                    entreguePara,
+                    dataEntrega,
+                    horaEntrega,
+                    observacoesEntrega
+                };
+                db.saveCorrespondencias(correspondencias);
+                renderTabelaCorrespondenciasPendentes();
+                renderTabelaCorrespondenciasEntregues();
+                updateDashboard();
+                fecharModal('modalEntrega');
+                showToast('Entrega confirmada!', 'success');
+            }
+        });
+
+        // Utils
+        function limparFormulario(formId) {
+            document.getElementById(formId).reset();
+            // Reseta a data e hora para os valores atuais
+            document.getElementById('dataRecebimento').valueAsDate = new Date();
+            document.getElementById('horaRecebimento').value = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function showToast(message, type = 'success', whatsappLink = null) {
+            const toast = document.getElementById('toast');
+            toast.className = `toast show ${type}`;
+            toast.innerHTML = `<p>${message}</p>`;
+            if (whatsappLink) {
+                toast.innerHTML += `<a href="${whatsappLink}" target="_blank" class="btn btn-primary" style="margin-top: 10px;">
+                                        <i class="fab fa-whatsapp"></i> Enviar WhatsApp
+                                    </a>`;
+            }
+            setTimeout(() => {
+                toast.className = toast.className.replace(' show', '');
+            }, 5000);
+        }
+
+        // Exportação
+        function exportarCorrespondenciasCSV() {
+            const data = correspondencias;
+            const header = ["Data Recebimento", "Hora Recebimento", "Bloco", "Apartamento", "Morador", "Tipo", "Observacoes", "Status", "Retirada Por", "Data Entrega", "Hora Entrega", "Obs. Entrega"];
+            
+            const csvContent = "data:text/csv;charset=utf-8," + header.join(";") + "\n" +
+                data.map(c => {
+                    const morador = moradores.find(m => m.id === c.moradorId) || {};
+                    const dataEntrega = c.dataEntrega || '';
+                    const horaEntrega = c.horaEntrega || '';
+                    const linha = [
+                        c.dataRecebimento,
+                        c.horaRecebimento,
+                        morador.bloco || '',
+                        morador.apartamento || '',
+                        morador.nome || '',
+                        c.tipo,
+                        `"${(c.observacoes || '').replace(/"/g, '""')}"`, // Trata aspas duplas
+                        c.status,
+                        c.entreguePara || '',
+                        dataEntrega,
+                        horaEntrega,
+                        `"${(c.observacoesEntrega || '').replace(/"/g, '""')}"`
+                    ];
+                    return linha.join(";");
+                }).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `correspondencias_backup_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('Backup exportado para a planilha CSV!', 'success');
+        }
+
+        // Salva a cada 30 segundos
+        setInterval(() => {
+            db.saveMoradores(moradores);
+            db.saveCorrespondencias(correspondencias);
+            console.log('Dados salvos automaticamente.');
+        }, 30000);
+
+        // Salva antes de sair da página
+        window.addEventListener('beforeunload', function(e) {
+            db.saveMoradores(moradores);
+            db.saveCorrespondencias(correspondencias);
+        });
+
+        // Atalhos do teclado
+        document.addEventListener('keydown', function(e) {
+            // Esc para fechar modais
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach(modal => {
+                    if (modal.style.display === 'block') {
+                        modal.style.display = 'none';
+                    }
+                });
+            }
+            
+            // Ctrl+S para salvar (previne salvamento do navegador)
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                db.saveMoradores(moradores);
+                db.saveCorrespondencias(correspondencias);
+                showToast('Dados salvos automaticamente!');
+            }
+        });
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            moradores = db.getMoradores();
+            correspondencias = db.getCorrespondencias();
+            populateMoradorSelects();
+            updateCorrespondenceSelects();
+            limparFormulario('formCorrespondencia'); // Para iniciar com data e hora atual
+            showSection('dashboard');
+        });
+    </script>
+</body>
+</html>
