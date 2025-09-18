@@ -1,72 +1,110 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<!-- ... todo o HTML original acima permanece igual ... -->
 
-<script>
-    // Sistema de persistência usando localStorage
-    class DatabaseManager {
-        constructor() {
-            this.initializeData();
+<head>
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker registrado com sucesso: ', registration.scope);
+                }, function(err) {
+                    console.log('Falha no registro do ServiceWorker: ', err);
+                });
+            });
         }
-        initializeData() {
-            if (!localStorage.getItem('moradores')) localStorage.setItem('moradores', JSON.stringify([]));
-            if (!localStorage.getItem('correspondencias')) localStorage.setItem('correspondencias', JSON.stringify([]));
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Correspondências</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* === Seu CSS original completo aqui === */
+    </style>
+</head>
+
+<body>
+    <!-- === Seu HTML original completo aqui (header, nav, seções, tabelas, modais, etc.) === -->
+
+    <script>
+        // Sistema de persistência usando localStorage
+        class DatabaseManager {
+            constructor() {
+                this.initializeData();
+            }
+
+            initializeData() {
+                if (!localStorage.getItem('moradores')) {
+                    localStorage.setItem('moradores', JSON.stringify([]));
+                }
+                if (!localStorage.getItem('correspondencias')) {
+                    localStorage.setItem('correspondencias', JSON.stringify([]));
+                }
+            }
+
+            getMoradores() {
+                return JSON.parse(localStorage.getItem('moradores') || '[]');
+            }
+
+            saveMoradores(moradores) {
+                localStorage.setItem('moradores', JSON.stringify(moradores));
+            }
+
+            getCorrespondencias() {
+                return JSON.parse(localStorage.getItem('correspondencias') || '[]');
+            }
+
+            saveCorrespondencias(correspondencias) {
+                localStorage.setItem('correspondencias', JSON.stringify(correspondencias));
+            }
         }
-        getMoradores() { return JSON.parse(localStorage.getItem('moradores') || '[]'); }
-        saveMoradores(m) { localStorage.setItem('moradores', JSON.stringify(m)); }
-        getCorrespondencias() { return JSON.parse(localStorage.getItem('correspondencias') || '[]'); }
-        saveCorrespondencias(c) { localStorage.setItem('correspondencias', JSON.stringify(c)); }
-    }
 
-    const db = new DatabaseManager();
-    let moradores = db.getMoradores();
-    let correspondencias = db.getCorrespondencias();
+        const db = new DatabaseManager();
 
-    // ATUALIZAÇÃO DASHBOARD
-    function updateDashboard() {
-        moradores = db.getMoradores();
-        correspondencias = db.getCorrespondencias();
-        document.getElementById('totalMoradores').textContent = moradores.length;
-        document.getElementById('totalCorrespondencias').textContent = correspondencias.length;
-        document.getElementById('pendentes').textContent = correspondencias.filter(c => c.status === 'Pendente').length;
-        document.getElementById('entregues').textContent = correspondencias.filter(c => c.status === 'Entregue').length;
-    }
+        let moradores = db.getMoradores();
+        let correspondencias = db.getCorrespondencias();
 
-    function atualizarDashboardInstantaneo() {
-        document.getElementById('totalMoradores').textContent = moradores.length;
-        document.getElementById('totalCorrespondencias').textContent = correspondencias.length;
-        document.getElementById('pendentes').textContent = correspondencias.filter(c => c.status === 'Pendente').length;
-        document.getElementById('entregues').textContent = correspondencias.filter(c => c.status === 'Entregue').length;
-    }
+        // === Todas as suas funções originais aqui ===
+        // ...
 
-    // EXCLUIR MORADOR
-    function excluirMorador(id) {
-        id = Number(id);
-        if (confirm('Tem certeza que deseja excluir este morador?')) {
-            moradores = moradores.filter(m => Number(m.id) !== id);
-            db.saveMoradores(moradores);
-            document.querySelector('#tabelaMoradores tbody').innerHTML = '';
-            renderTabelaMoradores();
-            updateDashboard();
-            showToast('Morador excluído com sucesso!', 'success');
-            atualizarDashboardInstantaneo();
+        // Função corrigida para excluir morador
+        function excluirMorador(id) {
+            if (confirm('Tem certeza que deseja excluir este morador?')) {
+                // Remove o morador
+                moradores = moradores.filter(m => m.id !== id);
+                db.saveMoradores(moradores);
+
+                // Remove também todas as correspondências ligadas a ele
+                correspondencias = correspondencias.filter(c => c.moradorId !== id);
+                db.saveCorrespondencias(correspondencias);
+
+                // Atualiza tudo
+                renderTabelaMoradores(moradores);
+                renderTabelaCorrespondenciasPendentes(correspondencias);
+                renderTabelaCorrespondenciasEntregues(correspondencias);
+                updateCorrespondenceSelects();
+                updateDashboard();
+
+                showToast('Morador e correspondências vinculadas excluídos com sucesso!', 'success');
+            }
         }
-    }
 
-    // EXCLUIR CORRESPONDÊNCIA
-    function excluirCorrespondencia(id) {
-        id = Number(id);
-        if (confirm('Tem certeza que deseja excluir esta correspondência?')) {
-            correspondencias = correspondencias.filter(c => Number(c.id) !== id);
-            db.saveCorrespondencias(correspondencias);
-            document.querySelector('#tabelaCorrespondencias tbody').innerHTML = '';
-            document.querySelector('#tabelaEntregues tbody').innerHTML = '';
-            renderTabelaCorrespondenciasPendentes();
-            renderTabelaCorrespondenciasEntregues();
-            updateDashboard();
-            showToast('Correspondência excluída com sucesso!', 'success');
-            atualizarDashboardInstantaneo();
+        // Função corrigida para excluir correspondência
+        function excluirCorrespondencia(id) {
+            if (confirm('Tem certeza que deseja excluir esta correspondência?')) {
+                correspondencias = correspondencias.filter(c => c.id !== id);
+                db.saveCorrespondencias(correspondencias);
+
+                // renderiza sempre usando a lista atualizada
+                renderTabelaCorrespondenciasPendentes(correspondencias);
+                renderTabelaCorrespondenciasEntregues(correspondencias);
+                updateDashboard();
+
+                showToast('Correspondência excluída com sucesso!', 'success');
+            }
         }
-    }
-</script>
+
+        // === Restante do seu código original (funções de formulário, filtros, modais, exportação, inicialização etc.) ===
+    </script>
+</body>
 </html>
