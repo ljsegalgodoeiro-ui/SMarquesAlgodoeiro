@@ -5,21 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistema de Correspondências</title>
 
-  <!-- Manifesto e PWA -->
   <link rel="manifest" href="manifest.json">
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('service-worker.js').then(function(registration) {
-          console.log('ServiceWorker registrado com sucesso: ', registration.scope);
-        }, function(err) {
-          console.log('Falha no registro do ServiceWorker: ', err);
-        });
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js');
       });
     }
   </script>
-
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
   <style>
@@ -27,89 +20,58 @@
       --primary-color: #1a73e8;
       --primary-hover-color: #1557b0;
       --success-color: #28a745;
-      --success-hover-color: #218838;
       --danger-color: #dc3545;
-      --danger-hover-color: #c82333;
-      --light-bg-color: #f8f9fa;
-      --white-bg-color: #ffffff;
-      --text-color: #333;
-      --secondary-text-color: #666;
-      --border-color: #e9ecef;
-      --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      --light-bg: #f8f9fa;
+      --white: #fff;
+      --border: #e0e0e0;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; background: var(--light-bg-color); color: var(--text-color); }
-
-    /* Cabeçalho */
-    .header { background: var(--white-bg-color); padding: 1rem 2rem; border-bottom: 1px solid var(--border-color);
-      display: flex; align-items: center; justify-content: space-between; }
-    .logo-section { display: flex; align-items: center; gap: 1rem; }
-    .logo { width: 40px; height: 40px; background: linear-gradient(135deg, #4285f4, #34a853);
-      border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; }
-    .logo-right { max-height: 40px; }
-    .system-title { font-size: 1.2rem; font-weight: 600; color: var(--primary-color); }
-    .condominio-name { color: var(--secondary-text-color); font-size: 0.9rem; }
-
-    /* Navegação */
-    .navigation { display: flex; gap: 2rem; background: var(--white-bg-color); padding: 0 2rem;
-      border-bottom: 1px solid var(--border-color); flex-wrap: wrap; }
-    .nav-item { padding: 1rem 0; cursor: pointer; border-bottom: 3px solid transparent; display: flex; align-items: center; gap: 0.5rem;
-      color: var(--secondary-text-color); text-decoration: none; transition: all 0.3s ease; }
-    .nav-item:hover { color: var(--primary-color); }
-    .nav-item.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-
+    body { font-family: Arial, sans-serif; margin: 0; background: var(--light-bg); }
+    .header { display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 2rem; background: var(--white); border-bottom: 1px solid var(--border); }
+    .logo { display: flex; align-items: center; gap: 1rem; }
+    .logo-icon { background: var(--primary-color); color: #fff; border-radius: 50%;
+      width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; }
+    .system-title { font-weight: bold; color: var(--primary-color); }
+    .nav { display: flex; gap: 2rem; background: var(--white); padding: 0.5rem 2rem; border-bottom: 1px solid var(--border); }
+    .nav a { text-decoration: none; color: #555; padding: 0.5rem; border-bottom: 3px solid transparent; }
+    .nav a.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
     .container { max-width: 1200px; margin: auto; padding: 2rem; }
     .content { display: none; }
     .content.active { display: block; }
-
-    /* Formulários e Tabelas */
-    form { margin-bottom: 2rem; background: var(--white-bg-color); padding: 1rem; border-radius: 8px; box-shadow: var(--card-shadow); }
-    form input, form select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid var(--border-color); border-radius: 5px; }
-    form button { margin-top: 10px; padding: 10px; border: none; border-radius: 5px; cursor: pointer; }
-    form button[type="submit"] { background: var(--primary-color); color: #fff; }
-    form button[type="submit"]:hover { background: var(--primary-hover-color); }
-
-    table { width: 100%; border-collapse: collapse; background: var(--white-bg-color); border-radius: 8px; box-shadow: var(--card-shadow); }
-    table th, table td { padding: 10px; border: 1px solid var(--border-color); text-align: left; }
-    table th { background: var(--light-bg-color); }
+    form { margin-bottom: 1.5rem; background: var(--white); padding: 1rem; border-radius: 8px; }
+    form input, form select { width: 100%; margin: 0.3rem 0; padding: 8px; }
+    form button { background: var(--primary-color); color: #fff; border: none; padding: 10px; margin-top: 0.5rem; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; background: var(--white); }
+    table th, table td { padding: 10px; border: 1px solid var(--border); text-align: left; }
     .btn { padding: 5px 10px; border: none; border-radius: 5px; cursor: pointer; }
     .btn-danger { background: var(--danger-color); color: #fff; }
-    .btn-danger:hover { background: var(--danger-hover-color); }
     .btn-success { background: var(--success-color); color: #fff; }
-    .btn-success:hover { background: var(--success-hover-color); }
-    .btn-warning { background: var(--warning-color); color: #fff; }
-    .btn-warning:hover { background: var(--warning-hover-color); }
-
-    /* Toast */
-    .toast { position: fixed; top: 20px; right: 20px; background: var(--success-color); color: #fff;
-      padding: 1rem 1.5rem; border-radius: 8px; box-shadow: var(--card-shadow);
-      z-index: 2000; transform: translateX(400px); transition: transform 0.3s ease; }
+    .btn-export { background: var(--primary-color); color: #fff; margin: 10px 0; }
+    .toast { position: fixed; top: 20px; right: 20px; background: var(--success-color);
+      color: #fff; padding: 10px 15px; border-radius: 5px; transform: translateX(200%); transition: .3s; }
     .toast.show { transform: translateX(0); }
     .toast.error { background: var(--danger-color); }
   </style>
 </head>
 <body>
-  <!-- Cabeçalho -->
   <header class="header">
-    <div class="logo-section">
-      <div class="logo"><i class="fas fa-envelope"></i></div>
+    <div class="logo">
+      <div class="logo-icon"><i class="fas fa-envelope"></i></div>
       <div>
         <div class="system-title">Sistema de Correspondências</div>
-        <div class="condominio-name">Condomínio Residencial Algodoeiro</div>
+        <div>Condomínio Residencial Algodoeiro</div>
       </div>
     </div>
-    <div><img src="logo_condominio.jpg" alt="Logo do Condomínio" class="logo-right"></div>
+    <img src="logo_condominio.jpg" alt="Logo" style="max-height:40px;">
   </header>
 
-  <!-- Navegação -->
-  <nav class="navigation">
-    <a href="#" class="nav-item active" onclick="showSection('dashboard')"><i class="fas fa-chart-bar"></i>Dashboard</a>
-    <a href="#" class="nav-item" onclick="showSection('correspondencias')"><i class="fas fa-envelope"></i>Correspondências</a>
-    <a href="#" class="nav-item" onclick="showSection('entregues')"><i class="fas fa-history"></i>Entregues</a>
-    <a href="#" class="nav-item" onclick="showSection('moradores')"><i class="fas fa-users"></i>Moradores</a>
+  <nav class="nav">
+    <a href="#" class="active" onclick="showSection('dashboard')">Dashboard</a>
+    <a href="#" onclick="showSection('correspondencias')">Correspondências</a>
+    <a href="#" onclick="showSection('entregues')">Entregues</a>
+    <a href="#" onclick="showSection('moradores')">Moradores</a>
   </nav>
 
-  <!-- Conteúdo -->
   <div class="container">
     <!-- Dashboard -->
     <div id="dashboard" class="content active">
@@ -121,18 +83,18 @@
 
     <!-- Correspondências -->
     <div id="correspondencias" class="content">
-      <h2>Registrar Correspondência</h2>
+      <h2>Nova Correspondência</h2>
       <form id="form-correspondencia">
         <input type="text" id="nomeMorador" placeholder="Nome do Morador" required>
         <select id="tipoCorrespondencia" required>
-          <option value="">Selecione o tipo</option>
+          <option value="">Tipo</option>
           <option value="Carta">Carta</option>
           <option value="Encomenda">Encomenda</option>
-          <option value="Outros">Outros</option>
         </select>
         <input type="date" id="dataRecebimento" required>
-        <button type="submit">Registrar</button>
+        <button type="submit">Adicionar</button>
       </form>
+      <button class="btn btn-export" onclick="exportarCSV('pendentes')">Exportar Pendentes</button>
       <table id="tabela-pendentes">
         <thead><tr><th>Morador</th><th>Tipo</th><th>Data</th><th>Ações</th></tr></thead>
         <tbody></tbody>
@@ -141,7 +103,8 @@
 
     <!-- Entregues -->
     <div id="entregues" class="content">
-      <h2>Histórico de Entregas</h2>
+      <h2>Correspondências Entregues</h2>
+      <button class="btn btn-export" onclick="exportarCSV('entregues')">Exportar Entregues</button>
       <table id="tabela-entregues">
         <thead><tr><th>Morador</th><th>Tipo</th><th>Data</th><th>Ações</th></tr></thead>
         <tbody></tbody>
@@ -150,82 +113,65 @@
 
     <!-- Moradores -->
     <div id="moradores" class="content">
-      <h2>Cadastrar Morador</h2>
+      <h2>Novo Morador</h2>
       <form id="form-morador">
-        <input type="text" id="novoMorador" placeholder="Nome do Morador" required>
+        <input type="text" id="novoMorador" placeholder="Nome" required>
         <input type="text" id="apartamento" placeholder="Apartamento" required>
         <input type="text" id="telefone" placeholder="Telefone (WhatsApp)" required>
-        <button type="submit">Cadastrar</button>
+        <button type="submit">Adicionar</button>
       </form>
+      <button class="btn btn-export" onclick="exportarCSV('moradores')">Exportar Moradores</button>
+      <h3>Moradores</h3>
       <ul id="lista-moradores"></ul>
     </div>
   </div>
 
-  <!-- Toast -->
   <div id="toast" class="toast"></div>
 
-  <!-- Scripts -->
   <script>
-    // Banco LocalStorage
-    function salvarDados(chave, dados){ localStorage.setItem(chave, JSON.stringify(dados)); }
-    function carregarDados(chave){ return JSON.parse(localStorage.getItem(chave)) || []; }
+    function salvar(chave,dados){localStorage.setItem(chave,JSON.stringify(dados));}
+    function carregar(chave){return JSON.parse(localStorage.getItem(chave))||[];}
+    let moradores=carregar("moradores"),pendentes=carregar("pendentes"),entregues=carregar("entregues");
 
-    let moradores = carregarDados("moradores");
-    let pendentes = carregarDados("pendentes");
-    let entregues = carregarDados("entregues");
-
-    // Navegação
     function showSection(id){
       document.querySelectorAll('.content').forEach(c=>c.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-      document.querySelector(`.nav-item[onclick="showSection('${id}')"]`).classList.add('active');
+      document.querySelectorAll('.nav a').forEach(a=>a.classList.remove('active'));
+      document.querySelector(`.nav a[onclick="showSection('${id}')"]`).classList.add('active');
       atualizarDashboard();
     }
-
-    // Toast
-    function toast(msg, erro=false){
-      const t=document.getElementById('toast');
-      t.textContent=msg;
-      t.className="toast show "+(erro?"error":"");
+    function toast(msg,erro=false){
+      const t=document.getElementById("toast");
+      t.textContent=msg; t.className="toast show"+(erro?" error":"");
       setTimeout(()=>t.className="toast",3000);
     }
-
-    // Dashboard
     function atualizarDashboard(){
-      document.getElementById("totalMoradores").textContent = moradores.length;
-      document.getElementById("totalPendentes").textContent = pendentes.length;
-      document.getElementById("totalEntregues").textContent = entregues.length;
+      totalMoradores.textContent=moradores.length;
+      totalPendentes.textContent=pendentes.length;
+      totalEntregues.textContent=entregues.length;
     }
 
-    // Moradores
     function renderMoradores(){
-      const ul=document.getElementById("lista-moradores");
-      ul.innerHTML="";
+      listaMoradores.innerHTML="";
       moradores.forEach((m,i)=>{
-        const li=document.createElement("li");
+        let li=document.createElement("li");
         li.innerHTML=`${m.nome} - Ap: ${m.apto} - Tel: ${m.tel}
           <button class="btn btn-danger" onclick="removerMorador(${i})">Excluir</button>`;
-        ul.appendChild(li);
+        listaMoradores.appendChild(li);
       });
-      salvarDados("moradores",moradores);
-      atualizarDashboard();
+      salvar("moradores",moradores); atualizarDashboard();
     }
-    function removerMorador(i){ moradores.splice(i,1); renderMoradores(); toast("Morador removido!"); }
-    document.getElementById("form-morador").addEventListener("submit",e=>{
+    function removerMorador(i){moradores.splice(i,1);renderMoradores();toast("Morador removido!");}
+    formMorador.addEventListener("submit",e=>{
       e.preventDefault();
       moradores.push({nome:novoMorador.value,apto:apartamento.value,tel:telefone.value});
-      renderMoradores();
-      e.target.reset();
-      toast("Morador cadastrado!");
+      renderMoradores(); e.target.reset(); toast("Morador cadastrado!");
     });
 
-    // Correspondências
     function renderPendentes(){
-      const tb=document.querySelector("#tabela-pendentes tbody");
-      tb.innerHTML="";
+      const tb=tabelaPendentes.querySelector("tbody"); tb.innerHTML="";
       pendentes.forEach((c,i)=>{
-        const tr=document.createElement("tr");
+        let tr=document.createElement("tr");
         tr.innerHTML=`<td>${c.nome}</td><td>${c.tipo}</td><td>${c.data}</td>
           <td>
             <button class="btn btn-success" onclick="entregar(${i})">Entregar</button>
@@ -233,48 +179,52 @@
           </td>`;
         tb.appendChild(tr);
       });
-      salvarDados("pendentes",pendentes);
-      atualizarDashboard();
+      salvar("pendentes",pendentes); atualizarDashboard();
     }
-    function removerPendente(i){ pendentes.splice(i,1); renderPendentes(); toast("Correspondência excluída!"); }
+    function removerPendente(i){pendentes.splice(i,1);renderPendentes();toast("Correspondência removida!");}
     function entregar(i){
-      entregues.push(pendentes[i]);
-      pendentes.splice(i,1);
-      renderPendentes(); renderEntregues();
-      salvarDados("entregues",entregues);
+      entregues.push(pendentes[i]); pendentes.splice(i,1);
+      renderPendentes(); renderEntregues(); salvar("entregues",entregues);
       toast("Correspondência entregue!");
-      // WhatsApp automático
-      const m = moradores.find(m=>m.nome===entregues[entregues.length-1].nome);
-      if(m && m.tel){
-        const msg=`Olá ${m.nome}, sua correspondência (${entregues[entregues.length-1].tipo}) já está disponível.`;
-        window.open(`https://wa.me/${m.tel}?text=${encodeURIComponent(msg)}`,"_blank");
-      }
+      let m=moradores.find(x=>x.nome===entregues[entregues.length-1].nome);
+      if(m&&m.tel){let msg=`Olá ${m.nome}, sua correspondência (${entregues[entregues.length-1].tipo}) já está disponível.`;
+        window.open(`https://wa.me/${m.tel}?text=${encodeURIComponent(msg)}`,"_blank");}
     }
-    document.getElementById("form-correspondencia").addEventListener("submit",e=>{
+    formCorrespondencia.addEventListener("submit",e=>{
       e.preventDefault();
       pendentes.push({nome:nomeMorador.value,tipo:tipoCorrespondencia.value,data:dataRecebimento.value});
-      renderPendentes();
-      e.target.reset();
-      toast("Correspondência registrada!");
+      renderPendentes(); e.target.reset(); toast("Correspondência registrada!");
     });
 
-    // Entregues
     function renderEntregues(){
-      const tb=document.querySelector("#tabela-entregues tbody");
-      tb.innerHTML="";
+      const tb=tabelaEntregues.querySelector("tbody"); tb.innerHTML="";
       entregues.forEach((c,i)=>{
-        const tr=document.createElement("tr");
+        let tr=document.createElement("tr");
         tr.innerHTML=`<td>${c.nome}</td><td>${c.tipo}</td><td>${c.data}</td>
           <td><button class="btn btn-danger" onclick="removerEntregue(${i})">Excluir</button></td>`;
         tb.appendChild(tr);
       });
-      salvarDados("entregues",entregues);
-      atualizarDashboard();
+      salvar("entregues",entregues); atualizarDashboard();
     }
-    function removerEntregue(i){ entregues.splice(i,1); renderEntregues(); toast("Entrega excluída!"); }
+    function removerEntregue(i){entregues.splice(i,1);renderEntregues();toast("Entrega excluída!");}
 
-    // Inicialização
-    renderMoradores(); renderPendentes(); renderEntregues(); atualizarDashboard();
+    // Exportação CSV
+    function exportarCSV(tipo){
+      let dados=[];
+      if(tipo==="moradores") dados=moradores;
+      if(tipo==="pendentes") dados=pendentes;
+      if(tipo==="entregues") dados=entregues;
+      if(dados.length===0){toast("Sem dados para exportar!",true);return;}
+      let csv=Object.keys(dados[0]).join(";")+"\n";
+      dados.forEach(d=>{csv+=Object.values(d).join(";")+"\n";});
+      let blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+      let link=document.createElement("a");
+      link.href=URL.createObjectURL(blob);
+      link.download=tipo+".csv";
+      link.click();
+    }
+
+    renderMoradores();renderPendentes();renderEntregues();atualizarDashboard();
   </script>
 </body>
 </html>
