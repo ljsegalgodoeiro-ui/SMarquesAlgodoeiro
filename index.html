@@ -2,6 +2,10 @@
 <html lang="pt-BR">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Correspondências</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
@@ -14,11 +18,6 @@
             });
         }
     </script>
-</head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Correspondências</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
             --primary-color: #1a73e8;
@@ -478,7 +477,7 @@
         .toast.error {
             background: var(--danger-color);
         }
-
+        
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -1240,14 +1239,13 @@
             renderTabelaCorrespondenciasPendentes();
             updateDashboard();
 
-            // Mostra o toast de sucesso com o botão do WhatsApp
             const whatsAppLink = createWhatsAppLink(morador, novaCorrespondencia);
-            showToast('Correspondência registrada com sucesso!', 'success', whatsAppLink);
+            showToast('Correspondência registrada com sucesso!', 'success', 'registrar', whatsAppLink);
 
             limparFormulario('formCorrespondencia');
         });
 
-        // Nova função para criar o link do WhatsApp
+        // Nova função para criar o link do WhatsApp para registro
         function createWhatsAppLink(morador, correspondencia) {
             if (!morador || !morador.telefone) {
                 console.error("Morador ou telefone não encontrados.");
@@ -1286,6 +1284,30 @@
             return `https://wa.me/55${telefoneLimpo}?text=${encodedMessage}`;
         }
 
+        // Nova função para criar o link do WhatsApp para entrega
+        function createDeliveryWhatsAppLink(morador, correspondencia) {
+            if (!morador || !morador.telefone) {
+                console.error("Morador ou telefone não encontrados.");
+                return null;
+            }
+
+            const telefoneLimpo = morador.telefone.replace(/\D/g, '');
+            const nomeMorador = morador.nome.split(' ')[0]; // Pega só o primeiro nome
+            const dataEntrega = new Date(correspondencia.dataEntrega + 'T00:00:00').toLocaleDateString('pt-BR');
+            const tipoCorrespondencia = correspondencia.tipo;
+            
+            const mensagem = `
+            Olá, Sr(a) ${nomeMorador},
+            A sua correspondência (${tipoCorrespondencia}) registrada em ${dataEntrega} às ${correspondencia.horaEntrega}, foi retirada da portaria.
+            
+            Obrigado e tenha um ótimo dia!
+            Atenciosamente,
+            Portaria - Condomínio Residencial Algodoeiro
+            `.trim().replace(/ {2,}/g, ' ');
+
+            const encodedMessage = encodeURIComponent(mensagem);
+            return `https://wa.me/55${telefoneLimpo}?text=${encodedMessage}`;
+        }
 
         function filtrarCorrespondenciasPendentes() {
             const filtroMorador = document.getElementById('filtroMorador').value.toLowerCase();
@@ -1381,20 +1403,22 @@
 
             const correspondenciaIndex = correspondencias.findIndex(c => c.id === id);
             if (correspondenciaIndex !== -1) {
-                correspondencias[correspondenciaIndex] = {
-                    ...correspondencias[correspondenciaIndex],
-                    status: 'Entregue',
-                    entreguePara,
-                    dataEntrega,
-                    horaEntrega,
-                    observacoesEntrega
-                };
+                const correspondencia = correspondencias[correspondenciaIndex];
+                correspondencia.status = 'Entregue';
+                correspondencia.entreguePara = entreguePara;
+                correspondencia.dataEntrega = dataEntrega;
+                correspondencia.horaEntrega = horaEntrega;
+                correspondencia.observacoesEntrega = observacoesEntrega;
+
                 db.saveCorrespondencias(correspondencias);
                 renderTabelaCorrespondenciasPendentes();
                 renderTabelaCorrespondenciasEntregues();
                 updateDashboard();
                 fecharModal('modalEntrega');
-                showToast('Entrega confirmada!', 'success');
+
+                const morador = moradores.find(m => m.id === correspondencia.moradorId);
+                const whatsAppLink = createDeliveryWhatsAppLink(morador, correspondencia);
+                showToast('Entrega confirmada!', 'success', 'entregar', whatsAppLink);
             }
         });
 
@@ -1405,19 +1429,22 @@
             document.getElementById('dataRecebimento').valueAsDate = new Date();
             document.getElementById('horaRecebimento').value = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         }
-
-        function showToast(message, type = 'success', whatsappLink = null) {
+        
+        function showToast(message, type = 'success', actionType, whatsAppLink = null) {
             const toast = document.getElementById('toast');
             toast.className = `toast show ${type}`;
             toast.innerHTML = `<p>${message}</p>`;
-            if (whatsappLink) {
-                toast.innerHTML += `<a href="${whatsappLink}" target="_blank" class="btn btn-primary" style="margin-top: 10px;">
-                                        <i class="fab fa-whatsapp"></i> Enviar WhatsApp
+
+            if (whatsAppLink) {
+                let buttonText = actionType === 'registrar' ? 'Avisar Morador' : 'Notificar Retirada';
+                toast.innerHTML += `<a href="${whatsAppLink}" target="_blank" class="btn btn-primary" style="margin-top: 10px;">
+                                        <i class="fab fa-whatsapp"></i> ${buttonText}
                                     </a>`;
             }
+
             setTimeout(() => {
                 toast.className = toast.className.replace(' show', '');
-            }, 5000);
+            }, 7000); // tempo para o toast sumir
         }
 
         // Exportação
@@ -1425,7 +1452,7 @@
             const data = correspondencias;
             const header = ["Data Recebimento", "Hora Recebimento", "Bloco", "Apartamento", "Morador", "Tipo", "Observacoes", "Status", "Retirada Por", "Data Entrega", "Hora Entrega", "Obs. Entrega"];
             
-            const csvContent = "data:text/csv;charset=utf-8," + header.join(";") + "\n" +
+            const csvContent = "data:text/csv;charset=utf-8," + header.map(h => `"${h}"`).join(";") + "\n" +
                 data.map(c => {
                     const morador = moradores.find(m => m.id === c.moradorId) || {};
                     const dataEntrega = c.dataEntrega || '';
