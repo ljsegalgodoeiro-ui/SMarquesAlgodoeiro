@@ -2,10 +2,6 @@
 <html lang="pt-BR">
 
 <head>
-    <!DOCTYPE html>
-<html lang="pt-BR">
-
-<head>
     <link rel="manifest" href="manifest.json">
     <script>
         if ('serviceWorker' in navigator) {
@@ -18,114 +14,7 @@
             });
         }
     </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Correspondências</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* === Seu CSS original completo aqui === */
-    </style>
-</head>
 
-<body>
-    <!-- === Seu HTML original completo aqui (header, nav, seções, tabelas, modais, etc.) === -->
-
-    <script>
-        // Sistema de persistência usando localStorage
-        class DatabaseManager {
-            constructor() {
-                this.initializeData();
-            }
-
-            initializeData() {
-                if (!localStorage.getItem('moradores')) {
-                    localStorage.setItem('moradores', JSON.stringify([]));
-                }
-                if (!localStorage.getItem('correspondencias')) {
-                    localStorage.setItem('correspondencias', JSON.stringify([]));
-                }
-            }
-
-            getMoradores() {
-                return JSON.parse(localStorage.getItem('moradores') || '[]');
-            }
-
-            saveMoradores(moradores) {
-                localStorage.setItem('moradores', JSON.stringify(moradores));
-            }
-
-            getCorrespondencias() {
-                return JSON.parse(localStorage.getItem('correspondencias') || '[]');
-            }
-
-            saveCorrespondencias(correspondencias) {
-                localStorage.setItem('correspondencias', JSON.stringify(correspondencias));
-            }
-        }
-
-        const db = new DatabaseManager();
-
-        let moradores = db.getMoradores();
-        let correspondencias = db.getCorrespondencias();
-
-        // === Todas as suas funções originais aqui ===
-        // ...
-
-        // Função corrigida para excluir morador
-        function excluirMorador(id) {
-            if (confirm('Tem certeza que deseja excluir este morador?')) {
-                // Remove o morador
-                moradores = moradores.filter(m => m.id !== id);
-                db.saveMoradores(moradores);
-
-                // Remove também todas as correspondências ligadas a ele
-                correspondencias = correspondencias.filter(c => c.moradorId !== id);
-                db.saveCorrespondencias(correspondencias);
-
-                // Atualiza tudo
-                renderTabelaMoradores(moradores);
-                renderTabelaCorrespondenciasPendentes(correspondencias);
-                renderTabelaCorrespondenciasEntregues(correspondencias);
-                updateCorrespondenceSelects();
-                updateDashboard();
-
-                showToast('Morador e correspondências vinculadas excluídos com sucesso!', 'success');
-            }
-        }
-
-        // Função corrigida para excluir correspondência
-        function excluirCorrespondencia(id) {
-            if (confirm('Tem certeza que deseja excluir esta correspondência?')) {
-                correspondencias = correspondencias.filter(c => c.id !== id);
-                db.saveCorrespondencias(correspondencias);
-
-                // renderiza sempre usando a lista atualizada
-                renderTabelaCorrespondenciasPendentes(correspondencias);
-                renderTabelaCorrespondenciasEntregues(correspondencias);
-                updateDashboard();
-
-                showToast('Correspondência excluída com sucesso!', 'success');
-            }
-        }
-
-        // === Restante do seu código original (funções de formulário, filtros, modais, exportação, inicialização etc.) ===
-    </script>
-</body>
-</html>
-
-    <link rel="manifest" href="manifest.json">
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('service-worker.js').then(function(registration) {
-                    console.log('ServiceWorker registrado com sucesso: ', registration.scope);
-                }, function(err) {
-                    console.log('Falha no registro do ServiceWorker: ', err);
-                });
-            });
-        }
-    </script>
-</head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Correspondências</title>
@@ -1216,12 +1105,32 @@
             }
         });
 
+        // Função corrigida para excluir morador (remove também correspondências vinculadas)
         function excluirMorador(id) {
             if (confirm('Tem certeza que deseja excluir este morador?')) {
+                // Remove o morador
                 moradores = moradores.filter(m => m.id !== id);
                 db.saveMoradores(moradores);
-                renderTabelaMoradores();
-                showToast('Morador excluído com sucesso!', 'success');
+
+                // Remove também todas as correspondências ligadas a ele
+                const antes = correspondencias.length;
+                correspondencias = correspondencias.filter(c => c.moradorId !== id);
+                const removidas = antes - correspondencias.length;
+                db.saveCorrespondencias(correspondencias);
+
+                // Atualiza tudo na interface
+                renderTabelaMoradores(moradores);
+                renderTabelaCorrespondenciasPendentes(correspondencias);
+                renderTabelaCorrespondenciasEntregues(correspondencias);
+                updateCorrespondenceSelects();
+                updateDashboard();
+
+                // Mensagem com sucesso
+                if (removidas > 0) {
+                    showToast(`Morador excluído e ${removidas} correspondência(s) vinculada(s) removida(s).`, 'success');
+                } else {
+                    showToast('Morador excluído com sucesso!', 'success');
+                }
             }
         }
 
@@ -1444,12 +1353,13 @@
             renderTabelaCorrespondenciasEntregues();
         }
 
+        // Função corrigida para excluir correspondência
         function excluirCorrespondencia(id) {
             if (confirm('Tem certeza que deseja excluir esta correspondência?')) {
                 correspondencias = correspondencias.filter(c => c.id !== id);
                 db.saveCorrespondencias(correspondencias);
-                renderTabelaCorrespondenciasPendentes();
-                renderTabelaCorrespondenciasEntregues();
+                renderTabelaCorrespondenciasPendentes(correspondencias);
+                renderTabelaCorrespondenciasEntregues(correspondencias);
                 updateDashboard();
                 showToast('Correspondência excluída com sucesso!', 'success');
             }
@@ -1548,12 +1458,12 @@
                         morador.apartamento || '',
                         morador.nome || '',
                         c.tipo,
-                        `"${(c.observacoes || '').replace(/"/g, '""')}"`, // Trata aspas duplas
+                        `"${(c.observacoes || '').replace(/"/g, '""')}"`,
                         c.status,
                         c.entreguePara || '',
                         dataEntrega,
                         horaEntrega,
-                        `"${(c.observacoesEntrega || '').replace(/"/g, '""')}"`
+                        `"${(c.observacoesEntrega || '').replace(/"/g, '""')}"` 
                     ];
                     return linha.join(";");
                 }).join("\n");
