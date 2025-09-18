@@ -1,43 +1,54 @@
-const CACHE_NAME = "correspondencias-cache-v1";
-const urlsToCache = [
+const CACHE_NAME = "smarques-cache-v1";
+
+// Lista de arquivos que podem ser usados offline (mínimo necessário)
+const FILES_TO_CACHE = [
   "./",
   "./index.html",
   "./manifest.json",
   "./logo_condominio.jpg"
 ];
 
-// Instala o Service Worker e faz o cache inicial
-self.addEventListener("install", event => {
+// Instala o Service Worker
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log("Arquivos em cache inicial");
-      return cache.addAll(urlsToCache);
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(FILES_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
 // Ativa o Service Worker e limpa caches antigos
-self.addEventListener("activate", event => {
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames =>
-      Promise.all(
-        cacheNames.map(cache => {
-          if (cache !== CACHE_NAME) {
-            console.log("Cache antigo removido:", cache);
-            return caches.delete(cache);
+    caches.keys().then((keyList) => {
+      return Promise.all(
+        keyList.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
           }
         })
-      )
-    )
+      );
+    })
   );
+  self.clients.claim();
 });
 
-// Intercepta as requisições e responde com cache ou rede
-self.addEventListener("fetch", event => {
+// Estratégia de busca: sempre tenta rede primeiro, se falhar usa cache
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      // Retorna do cache ou busca na internet
-      return response || fetch(event.request);
-    })
+    fetch(event.request)
+      .then((response) => {
+        // Atualiza cache com a versão mais recente
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseClone);
+        });
+        return response;
+      })
+      .catch(() => {
+        // Se não houver rede, usa o cache
+        return caches.match(event.request);
+      })
   );
 });
