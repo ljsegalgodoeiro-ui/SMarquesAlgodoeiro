@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <!-- todo o conteúdo original do seu <head> aqui -->
+</head>
+<body>
+  <!-- todo o conteúdo HTML original aqui -->
+
+  <script>
+    // ... demais scripts originais ...
+
+    function excluirCorrespondencia(id) {
+        id = Number(id);
+        if (confirm('Tem certeza que deseja excluir esta correspondência?')) {
+            correspondencias = correspondencias.filter(c => Number(c.id) !== id);
+            db.saveCorrespondencias(correspondencias);
+            document.querySelector('#tabelaCorrespondenciasPendentes tbody').innerHTML = '';
+            document.querySelector('#tabelaCorrespondenciasEntregues tbody').innerHTML = '';
+            renderTabelaCorrespondenciasPendentes();
+            renderTabelaCorrespondenciasEntregues();
+            updateDashboard();
+            showToast('Correspondência excluída com sucesso!', 'success');
+            atualizarDashboardInstantaneo();
+        }
+    }
+
+    function excluirMorador(id) {
+        id = Number(id);
+        if (confirm('Tem certeza que deseja excluir este morador?')) {
+            moradores = moradores.filter(m => Number(m.id) !== id);
+            db.saveMoradores(moradores);
+            document.querySelector('#tabelaMoradores tbody').innerHTML = '';
+            renderTabelaMoradores();
+            updateDashboard();
+            showToast('Morador excluído com sucesso!', 'success');
+            atualizarDashboardInstantaneo();
+        }
+    }
+
+    function atualizarDashboardInstantaneo() {
+        // Atualiza os elementos de contagem do dashboard instantaneamente
+        document.getElementById('totalCorrespondencias').textContent = correspondencias.length;
+        document.getElementById('totalPendentes').textContent = correspondencias.filter(c => !c.entregue).length;
+        document.getElementById('totalEntregues').textContent = correspondencias.filter(c => c.entregue).length;
+        document.getElementById('totalMoradores').textContent = moradores.length;
+    }
+
+    // ... restante dos scripts originais ...
+  </script>
+</body>
+</html>
